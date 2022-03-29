@@ -1,6 +1,7 @@
 package com.jetbrains.handson.httpapi
 
 import com.jetbrains.handson.httpapi.routes.registerCustomerRoutes
+import com.jetbrains.handson.httpapi.routes.registerDeliveryRoute
 import com.jetbrains.handson.httpapi.routes.registerSubscriptionRoutes
 import io.ktor.application.*
 import io.ktor.features.*
@@ -18,6 +19,7 @@ fun Application.module() {
     }
     registerCustomerRoutes()
     registerSubscriptionRoutes()
+    registerDeliveryRoute()
 }
 
 /*
