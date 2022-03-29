@@ -1,7 +1,6 @@
 package com.jetbrains.handson.httpapi.routes
 
 import com.jetbrains.handson.httpapi.models.Subscription
-import com.jetbrains.handson.httpapi.models.subscriptions
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*

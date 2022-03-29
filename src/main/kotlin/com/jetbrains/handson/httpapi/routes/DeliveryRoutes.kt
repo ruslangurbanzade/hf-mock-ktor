@@ -1,7 +1,6 @@
 package com.jetbrains.handson.httpapi.routes
 
 import com.jetbrains.handson.httpapi.models.Delivery
-import com.jetbrains.handson.httpapi.models.deliveryStorage
 import io.ktor.application.*
 import io.ktor.http.*
 import io.ktor.request.*
