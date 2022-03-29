@@ -7,6 +7,7 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.litote.kmongo.coroutine.CoroutineCollection
+import org.litote.kmongo.eq
 
 fun Route.subscriptionRoutes(subscriptionCoroutines: CoroutineCollection<Subscription>) {
     route("/subscriptions") {
@@ -43,6 +44,20 @@ fun Route.subscriptionRoutes(subscriptionCoroutines: CoroutineCollection<Subscri
                 subscriptionCoroutines.insertOne(subscription)
                 call.respondText("Subscription added successfully", status = HttpStatusCode.Created)
             }
+        }
+
+        delete("{id}") {
+            val id = call.parameters["id"] ?: return@delete call.respondText(
+                "Missing or malformed id",
+                status = HttpStatusCode.BadRequest
+            )
+            val subscriptions = subscriptionCoroutines.find().toList()
+            subscriptions.find { it.subsId == id } ?: return@delete call.respondText(
+                "No subscription found with id $id",
+                status = HttpStatusCode.NotFound
+            )
+            subscriptionCoroutines.deleteOne(Subscription::subsId eq id)
+            call.respondText("Subscription deleted successfully")
         }
     }
 }
