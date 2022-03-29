@@ -7,10 +7,12 @@ import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import org.litote.kmongo.coroutine.CoroutineCollection
 
-fun Route.subscriptionRoutes() {
+fun Route.subscriptionRoutes(subscriptionCoroutines: CoroutineCollection<Subscription>) {
     route("/subscriptions") {
         get {
+            val subscriptions = subscriptionCoroutines.find().toList()
             if (subscriptions.isNotEmpty()) {
                 call.respond(subscriptions)
             } else {
@@ -19,6 +21,7 @@ fun Route.subscriptionRoutes() {
         }
 
         get("{id}") {
+            val subscriptions = subscriptionCoroutines.find().toList()
             val id = call.parameters["id"] ?: return@get call.respondText(
                 "Missing or malformed id",
                 status = HttpStatusCode.BadRequest
@@ -31,21 +34,22 @@ fun Route.subscriptionRoutes() {
         }
 
         post {
+            val subscriptions = subscriptionCoroutines.find().toList()
             val subscription = call.receive<Subscription>()
             if (subscription.subsId.isEmpty() || subscription.body.isEmpty()) {
                 call.respondText("Invalid subscription", status = HttpStatusCode.BadRequest)
             } else if (subscriptions.any { it.subsId == subscription.subsId }) {
                 call.respondText("Subscription already added", status = HttpStatusCode.Conflict)
             } else {
-                subscriptions.add(subscription)
+                subscriptionCoroutines.insertOne(subscription)
                 call.respondText("Subscription added successfully", status = HttpStatusCode.Created)
             }
         }
     }
 }
 
-fun Application.registerSubscriptionRoutes() {
+fun Application.registerSubscriptionRoutes(subscriptionCoroutines: CoroutineCollection<Subscription>) {
     routing {
-        subscriptionRoutes()
+        subscriptionRoutes(subscriptionCoroutines)
     }
 }

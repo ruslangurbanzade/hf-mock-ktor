@@ -1,34 +1,46 @@
 package com.jetbrains.handson.httpapi
 
+import com.jetbrains.handson.httpapi.models.Delivery
+import com.jetbrains.handson.httpapi.models.Subscription
 import com.jetbrains.handson.httpapi.routes.registerCustomerRoutes
 import com.jetbrains.handson.httpapi.routes.registerDeliveryRoute
 import com.jetbrains.handson.httpapi.routes.registerSubscriptionRoutes
 import io.ktor.application.*
 import io.ktor.features.*
-import io.ktor.http.ContentDisposition.Companion.File
-import io.ktor.network.tls.certificates.*
 import io.ktor.serialization.*
-import java.io.File
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import org.litote.kmongo.coroutine.CoroutineCollection
+import org.litote.kmongo.coroutine.coroutine
+import org.litote.kmongo.reactivestreams.KMongo
+import org.slf4j.LoggerFactory
 
-
-fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
+lateinit var collection: CoroutineCollection<Delivery>
+lateinit var subscriptions: CoroutineCollection<Subscription>
 
 fun Application.module() {
-    install(ContentNegotiation){
+    install(ContentNegotiation) {
         json()
     }
     registerCustomerRoutes()
-    registerSubscriptionRoutes()
-    registerDeliveryRoute()
+    registerDeliveryRoute(collection)
+    registerSubscriptionRoutes(subscriptions)
 }
 
-/*
+val environment = applicationEngineEnvironment {
+    log = LoggerFactory.getLogger("ktor.application")
+    connector {
+        host = "127.0.0.1"
+        port = 8080
+    }
+    module(Application::module)
+}
+
 fun main() {
-    val keyStoreFile = File("build/keystore.jks")
-    val keystore = generateCertificate(
-        file = keyStoreFile,
-        keyAlias = "sampleAlias",
-        keyPassword = "foobar",
-        jksPassword = "foobar"
-    )
-}*/
+    val client = KMongo.createClient().coroutine
+    val database = client.getDatabase("delivery")
+    collection = database.getCollection()
+    subscriptions = database.getCollection()
+    embeddedServer(Netty, environment).start(wait = true)
+}
+
