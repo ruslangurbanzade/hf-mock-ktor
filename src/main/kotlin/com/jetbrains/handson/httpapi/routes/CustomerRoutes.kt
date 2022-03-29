@@ -38,3 +38,9 @@ fun Route.customerRouting() {
         }
     }
 }
+
+fun Application.registerCustomerRoutes() {
+    routing {
+        customerRouting()
+    }
+}
