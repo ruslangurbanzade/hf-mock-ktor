@@ -7,18 +7,21 @@ import io.ktor.http.*
 import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
+import org.litote.kmongo.coroutine.CoroutineCollection
 
-fun Route.deliveryRouting() {
+fun Route.deliveryRouting(col: CoroutineCollection<Delivery>) {
     route("/delivery") {
         get {
+            val deliveryStorage = col.find().toList()
             if (deliveryStorage.isNotEmpty()) {
-                call.respond(deliveryStorage)
+                call.respond(col.find().toList())
             } else {
                 call.respondText("No customers found", status = HttpStatusCode.NotFound)
             }
         }
 
         get("{id}") {
+            val deliveryStorage = col.find().toList()
             val id = call.parameters["id"] ?: return@get call.respondText(
                 "Missing or malformed id",
                 status = HttpStatusCode.BadRequest
@@ -30,9 +33,11 @@ fun Route.deliveryRouting() {
             call.respond(delivery)
         }
         post() {
-            val delivery = call.receive<Delivery>()
-            if (deliveryStorage.isEmpty() || deliveryStorage.none { it.id == delivery.id }) {
-                deliveryStorage.add(delivery)
+            val deliveryStorage = col.find().toList()
+            val requestBody = call.receive<Delivery>()
+            if (deliveryStorage.isEmpty() || deliveryStorage.toList().none { it.id == requestBody.id }) {
+                val delivery = requestBody.copy(id = deliveryStorage.size.plus(1))
+                col.insertOne(delivery)
                 call.respondText("Delivery stored correctly", status = HttpStatusCode.Created)
             } else {
                 call.respondText("Delivery already added", status = HttpStatusCode.Conflict)
@@ -42,8 +47,8 @@ fun Route.deliveryRouting() {
 }
 
 
-fun Application.registerDeliveryRoute() {
+fun Application.registerDeliveryRoute(col: CoroutineCollection<Delivery>) {
     routing {
-        deliveryRouting()
+        deliveryRouting(col)
     }
 }

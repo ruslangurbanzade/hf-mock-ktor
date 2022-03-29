@@ -1,5 +1,6 @@
 package com.jetbrains.handson.httpapi
 
+import com.jetbrains.handson.httpapi.models.Delivery
 import com.jetbrains.handson.httpapi.routes.registerCustomerRoutes
 import com.jetbrains.handson.httpapi.routes.registerDeliveryRoute
 import io.ktor.application.*
@@ -8,6 +9,9 @@ import io.ktor.network.tls.certificates.*
 import io.ktor.serialization.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import org.litote.kmongo.coroutine.CoroutineCollection
+import org.litote.kmongo.coroutine.coroutine
+import org.litote.kmongo.reactivestreams.KMongo
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -25,6 +29,8 @@ import java.io.File
 //    )
 //}
 
+lateinit var collection: CoroutineCollection<Delivery>
+
 val keyStoreFile = File("build/keystore.jks")
 val keystore = generateCertificate(
     file = keyStoreFile,
@@ -38,7 +44,7 @@ fun Application.module() {
         json()
     }
     registerCustomerRoutes()
-    registerDeliveryRoute()
+    registerDeliveryRoute(collection)
 }
 
 
@@ -59,6 +65,9 @@ val environment = applicationEngineEnvironment {
 }
 
 fun main() {
+    val client = KMongo.createClient().coroutine
+    val database = client.getDatabase("delivery")
+    collection = database.getCollection()
     embeddedServer(Netty, environment).start(wait = true)
 }
 
